@@ -1,0 +1,442 @@
+{
+	"$schema": "https://emdashcms.com/seed.schema.json",
+	"version": "1",
+	"meta": {
+		"name": "EmDash LMS",
+		"description": "Membership plans, courses, quizzes, and integrated checkout",
+		"author": "Tô Triều"
+	},
+
+	"settings": {
+		"lms": {
+			"mode": "full",
+			"currency": "USD",
+			"checkoutEnabled": true
+		}
+	},
+
+	"collections": [
+		{
+			"slug": "membership_plans",
+			"label": "Membership Plans",
+			"labelSingular": "Plan",
+			"icon": "credit-card",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "name", "label": "Plan Name", "type": "string", "required": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "price", "label": "Price", "type": "number", "required": true, "options": { "min": 0 } },
+				{ "slug": "currency", "label": "Currency", "type": "string", "defaultValue": "USD" },
+				{ "slug": "sale_price", "label": "Sale Price", "type": "number", "options": { "min": 0 } },
+				{ "slug": "sale_start", "label": "Sale Start", "type": "datetime" },
+				{ "slug": "sale_end", "label": "Sale End", "type": "datetime" },
+				{ "slug": "billing_period", "label": "Billing Period", "type": "string", "options": { "choices": ["monthly", "quarterly", "yearly", "lifetime"] } },
+				{ "slug": "features", "label": "Features", "type": "json" },
+				{ "slug": "limits", "label": "Limits", "type": "json" },
+				{ "slug": "sort_order", "label": "Sort Order", "type": "integer", "defaultValue": 0 }
+			]
+		},
+		{
+			"slug": "course_categories",
+			"label": "Course Categories",
+			"labelSingular": "Category",
+			"icon": "folder",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "name", "label": "Name", "type": "string", "required": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "sort_order", "label": "Sort Order", "type": "integer", "defaultValue": 0 }
+			]
+		},
+		{
+			"slug": "courses",
+			"label": "Courses",
+			"labelSingular": "Course",
+			"icon": "book-open",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
+				{ "slug": "excerpt", "label": "Excerpt", "type": "text", "searchable": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "featured_image", "label": "Featured Image", "type": "image" },
+				{ "slug": "content", "label": "Content", "type": "portableText", "searchable": true },
+				{ "slug": "category_id", "label": "Category", "type": "reference", "options": { "collection": "course_categories" } },
+				{ "slug": "prerequisite_id", "label": "Prerequisite Course", "type": "reference", "options": { "collection": "courses" } },
+				{ "slug": "access_level", "label": "Access Level", "type": "string", "options": { "choices": ["free", "membership", "purchase"] }, "defaultValue": "membership" },
+				{ "slug": "is_purchasable", "label": "Individual Purchase", "type": "boolean", "defaultValue": false },
+				{ "slug": "required_plan_ids", "label": "Required Plans", "type": "json" },
+				{ "slug": "price", "label": "Price", "type": "number", "options": { "min": 0 } },
+				{ "slug": "currency", "label": "Currency", "type": "string", "defaultValue": "USD" },
+				{ "slug": "sale_price", "label": "Sale Price", "type": "number", "options": { "min": 0 } },
+				{ "slug": "sale_start", "label": "Sale Start", "type": "datetime" },
+				{ "slug": "sale_end", "label": "Sale End", "type": "datetime" },
+				{ "slug": "duration_hours", "label": "Duration (hours)", "type": "number" },
+				{ "slug": "difficulty", "label": "Difficulty", "type": "string", "options": { "choices": ["beginner", "intermediate", "advanced"] } },
+				{ "slug": "featured", "label": "Featured", "type": "boolean", "defaultValue": false }
+			]
+		},
+		{
+			"slug": "modules",
+			"label": "Modules",
+			"labelSingular": "Module",
+			"icon": "folder",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true },
+				{ "slug": "course_id", "label": "Course", "type": "reference", "options": { "collection": "courses" }, "required": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "sort_order", "label": "Sort Order", "type": "integer", "defaultValue": 0 }
+			]
+		},
+		{
+			"slug": "lessons",
+			"label": "Lessons",
+			"labelSingular": "Lesson",
+			"icon": "play-circle",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"commentsEnabled": true,
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true, "searchable": true },
+				{ "slug": "module_id", "label": "Module", "type": "reference", "options": { "collection": "modules" }, "required": true },
+				{ "slug": "course_id", "label": "Course", "type": "reference", "options": { "collection": "courses" }, "required": true },
+				{ "slug": "excerpt", "label": "Excerpt", "type": "text" },
+				{ "slug": "featured_image", "label": "Featured Image", "type": "image" },
+				{ "slug": "content", "label": "Content", "type": "portableText", "searchable": true },
+				{ "slug": "summary", "label": "Summary", "type": "portableText" },
+				{ "slug": "video_url", "label": "Video URL", "type": "string" },
+				{ "slug": "duration_minutes", "label": "Duration (minutes)", "type": "integer" },
+				{ "slug": "sort_order", "label": "Sort Order", "type": "integer", "defaultValue": 0 },
+				{ "slug": "is_preview", "label": "Free Preview", "type": "boolean", "defaultValue": false },
+				{ "slug": "prerequisite_id", "label": "Prerequisite Lesson", "type": "reference", "options": { "collection": "lessons" } },
+				{ "slug": "complexity", "label": "Complexity", "type": "string", "options": { "choices": ["easy", "medium", "hard"] } },
+				{ "slug": "resources", "label": "Resources", "type": "json" }
+			]
+		},
+		{
+			"slug": "quizzes",
+			"label": "Quizzes",
+			"labelSingular": "Quiz",
+			"icon": "clipboard-list",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "title", "label": "Title", "type": "string", "required": true },
+				{ "slug": "lesson_id", "label": "Lesson", "type": "reference", "options": { "collection": "lessons" }, "required": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "passmark", "label": "Pass Mark (%)", "type": "integer", "defaultValue": 70, "options": { "min": 0, "max": 100 } },
+				{ "slug": "pass_required", "label": "Pass Required", "type": "boolean", "defaultValue": false },
+				{ "slug": "timer_minutes", "label": "Time Limit (minutes)", "type": "integer", "options": { "min": 0 } },
+				{ "slug": "allow_reset", "label": "Allow Retry", "type": "boolean", "defaultValue": true },
+				{ "slug": "random_order", "label": "Randomize Questions", "type": "boolean", "defaultValue": false },
+				{ "slug": "grade_type", "label": "Grading", "type": "string", "options": { "choices": ["auto", "manual"] }, "defaultValue": "auto" }
+			]
+		},
+		{
+			"slug": "questions",
+			"label": "Questions",
+			"labelSingular": "Question",
+			"icon": "help-circle",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "quiz_id", "label": "Quiz", "type": "reference", "options": { "collection": "quizzes" }, "required": true },
+				{ "slug": "question", "label": "Question", "type": "text", "required": true },
+				{ "slug": "question_image", "label": "Question Image", "type": "image" },
+				{ "slug": "type", "label": "Type", "type": "string", "options": { "choices": ["single", "multiple", "text", "fill_blank"] }, "defaultValue": "single" },
+				{ "slug": "answers", "label": "Answers", "type": "json" },
+				{ "slug": "grade", "label": "Points", "type": "number", "defaultValue": 1 },
+				{ "slug": "sort_order", "label": "Sort Order", "type": "integer", "defaultValue": 0 },
+				{ "slug": "explanation", "label": "Explanation", "type": "text" },
+				{ "slug": "random_order", "label": "Randomize Answers", "type": "boolean", "defaultValue": false }
+			]
+		},
+		{
+			"slug": "coupons",
+			"label": "Coupons",
+			"labelSingular": "Coupon",
+			"icon": "ticket",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "code", "label": "Code", "type": "string", "required": true, "unique": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "type", "label": "Type", "type": "string", "options": { "choices": ["percentage", "fixed"] }, "defaultValue": "percentage" },
+				{ "slug": "value", "label": "Value", "type": "number", "required": true, "options": { "min": 0 } },
+				{ "slug": "applies_to", "label": "Applies To", "type": "string", "options": { "choices": ["all", "membership", "course"] }, "defaultValue": "all" },
+				{ "slug": "applicable_ids", "label": "Specific Items", "type": "json" },
+				{ "slug": "usage_limit", "label": "Usage Limit", "type": "integer" },
+				{ "slug": "usage_count", "label": "Times Used", "type": "integer", "defaultValue": 0 },
+				{ "slug": "per_user_limit", "label": "Per User Limit", "type": "integer", "defaultValue": 1 },
+				{ "slug": "min_purchase", "label": "Min Purchase", "type": "number", "options": { "min": 0 } },
+				{ "slug": "valid_from", "label": "Valid From", "type": "datetime" },
+				{ "slug": "valid_until", "label": "Valid Until", "type": "datetime" }
+			]
+		},
+		{
+			"slug": "course_reviews",
+			"label": "Course Reviews",
+			"labelSingular": "Review",
+			"icon": "star",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "course_id", "label": "Course", "type": "reference", "options": { "collection": "courses" }, "required": true },
+				{ "slug": "user_id", "label": "User ID", "type": "string", "required": true },
+				{ "slug": "rating", "label": "Rating", "type": "integer", "required": true, "options": { "min": 1, "max": 5 } },
+				{ "slug": "title", "label": "Title", "type": "string" },
+				{ "slug": "content", "label": "Review", "type": "text" },
+				{ "slug": "verified_purchase", "label": "Verified", "type": "boolean", "defaultValue": false },
+				{ "slug": "helpful_count", "label": "Helpful Votes", "type": "integer", "defaultValue": 0 }
+			]
+		},
+		{
+			"slug": "certificate_templates",
+			"label": "Certificate Templates",
+			"labelSingular": "Template",
+			"icon": "award",
+			"supports": ["drafts"],
+			"fields": [
+				{ "slug": "name", "label": "Name", "type": "string", "required": true },
+				{ "slug": "description", "label": "Description", "type": "text" },
+				{ "slug": "design", "label": "Design (HTML/SVG)", "type": "text", "required": true },
+				{ "slug": "course_id", "label": "Course (optional)", "type": "reference", "options": { "collection": "courses" } }
+			]
+		}
+	],
+
+	"content": {
+		"membership_plans": [
+			{
+				"id": "plan-free",
+				"slug": "free",
+				"status": "published",
+				"data": {
+					"name": "Free",
+					"description": "Access to free courses only",
+					"price": 0,
+					"currency": "USD",
+					"billing_period": "lifetime",
+					"features": ["Access to free courses", "Community forum access"],
+					"limits": { "courses": "free_only" },
+					"sort_order": 0
+				}
+			},
+			{
+				"id": "plan-basic",
+				"slug": "basic",
+				"status": "published",
+				"data": {
+					"name": "Basic",
+					"description": "Access to basic course library",
+					"price": 9.99,
+					"currency": "USD",
+					"billing_period": "monthly",
+					"features": ["All free courses", "Basic course library", "Email support"],
+					"limits": { "courses": "basic" },
+					"sort_order": 1
+				}
+			},
+			{
+				"id": "plan-pro",
+				"slug": "pro",
+				"status": "published",
+				"data": {
+					"name": "Pro",
+					"description": "Full access to all courses",
+					"price": 29.99,
+					"currency": "USD",
+					"sale_price": 19.99,
+					"billing_period": "monthly",
+					"features": ["All courses", "Certificates", "Priority support", "Downloadable resources"],
+					"limits": { "courses": "all", "downloads": true, "certificates": true },
+					"sort_order": 2
+				}
+			}
+		],
+		"course_categories": [
+			{
+				"id": "cat-basics",
+				"slug": "basics",
+				"status": "published",
+				"data": { "name": "Basics", "description": "Foundational courses", "sort_order": 0 }
+			},
+			{
+				"id": "cat-advanced",
+				"slug": "advanced",
+				"status": "published",
+				"data": { "name": "Advanced", "description": "Advanced topics", "sort_order": 1 }
+			}
+		],
+		"courses": [
+			{
+				"id": "course-getting-started",
+				"slug": "getting-started",
+				"status": "published",
+				"data": {
+					"title": "Getting Started",
+					"excerpt": "Introduction to our learning platform",
+					"description": "Learn how to navigate and use the platform effectively",
+					"category_id": "cat-basics",
+					"access_level": "free",
+					"is_purchasable": false,
+					"difficulty": "beginner",
+					"duration_hours": 1,
+					"featured": true
+				}
+			},
+			{
+				"id": "course-fundamentals",
+				"slug": "fundamentals",
+				"status": "published",
+				"data": {
+					"title": "Fundamentals Course",
+					"excerpt": "Core concepts and foundations",
+					"description": "Master the fundamental concepts",
+					"category_id": "cat-basics",
+					"access_level": "membership",
+					"required_plan_ids": ["plan-basic", "plan-pro"],
+					"is_purchasable": true,
+					"price": 49.99,
+					"currency": "USD",
+					"difficulty": "beginner",
+					"duration_hours": 5
+				}
+			}
+		],
+		"modules": [
+			{
+				"id": "module-intro",
+				"slug": "introduction",
+				"status": "published",
+				"data": {
+					"title": "Introduction",
+					"course_id": "course-getting-started",
+					"description": "Welcome and platform overview",
+					"sort_order": 0
+				}
+			},
+			{
+				"id": "module-basics",
+				"slug": "basics",
+				"status": "published",
+				"data": {
+					"title": "The Basics",
+					"course_id": "course-getting-started",
+					"description": "Core features walkthrough",
+					"sort_order": 1
+				}
+			}
+		],
+		"lessons": [
+			{
+				"id": "lesson-welcome",
+				"slug": "welcome",
+				"status": "published",
+				"data": {
+					"title": "Welcome to the Platform",
+					"module_id": "module-intro",
+					"course_id": "course-getting-started",
+					"excerpt": "Your first steps",
+					"duration_minutes": 5,
+					"sort_order": 0,
+					"is_preview": true,
+					"complexity": "easy",
+					"resources": [
+						{ "type": "pdf", "title": "Welcome Guide", "url": "/resources/welcome-guide.pdf" }
+					]
+				}
+			},
+			{
+				"id": "lesson-navigation",
+				"slug": "platform-navigation",
+				"status": "published",
+				"data": {
+					"title": "Navigating the Platform",
+					"module_id": "module-intro",
+					"course_id": "course-getting-started",
+					"duration_minutes": 10,
+					"sort_order": 1,
+					"is_preview": true,
+					"complexity": "easy"
+				}
+			}
+		],
+		"quizzes": [
+			{
+				"id": "quiz-welcome",
+				"slug": "welcome-quiz",
+				"status": "published",
+				"data": {
+					"title": "Welcome Quiz",
+					"lesson_id": "lesson-welcome",
+					"description": "Test your understanding",
+					"passmark": 70,
+					"pass_required": false,
+					"allow_reset": true,
+					"random_order": false,
+					"grade_type": "auto"
+				}
+			}
+		],
+		"questions": [
+			{
+				"id": "q1",
+				"slug": "q1-platform-purpose",
+				"status": "published",
+				"data": {
+					"quiz_id": "quiz-welcome",
+					"question": "What is the main purpose of this platform?",
+					"type": "single",
+					"answers": [
+						{ "id": "a1", "text": "Learning and education", "is_correct": true },
+						{ "id": "a2", "text": "Social networking", "is_correct": false },
+						{ "id": "a3", "text": "E-commerce", "is_correct": false }
+					],
+					"grade": 1,
+					"sort_order": 0,
+					"explanation": "This is a learning management system designed for education."
+				}
+			}
+		],
+		"coupons": [
+			{
+				"id": "coupon-welcome",
+				"slug": "welcome20",
+				"status": "published",
+				"data": {
+					"code": "WELCOME20",
+					"description": "20% off for new users",
+					"type": "percentage",
+					"value": 20,
+					"applies_to": "all",
+					"usage_limit": 1000,
+					"usage_count": 0,
+					"per_user_limit": 1
+				}
+			},
+			{
+				"id": "coupon-pro50",
+				"slug": "pro50",
+				"status": "published",
+				"data": {
+					"code": "PRO50",
+					"description": "$50 off Pro membership",
+					"type": "fixed",
+					"value": 50,
+					"applies_to": "membership",
+					"applicable_ids": ["plan-pro"],
+					"min_purchase": 100,
+					"usage_count": 0
+				}
+			}
+		],
+		"certificate_templates": [
+			{
+				"id": "cert-default",
+				"slug": "default",
+				"status": "published",
+				"data": {
+					"name": "Default Certificate",
+					"description": "Standard completion certificate",
+					"design": "<div class=\"certificate\"><h1>Certificate of Completion</h1><p>{{user_name}}</p><p>{{course_title}}</p><p>{{completion_date}}</p></div>"
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,103 @@
+{
+	"$schema": "https://emdashcms.com/seed.schema.json",
+	"version": "1",
+	"meta": {
+		"name": "EmDash LMS - Membership Only",
+		"description": "Subscription plans and member management",
+		"author": "EmDash"
+	},
+
+	"settings": {
+		"lms": {
+			"mode": "membership",
+			"currency": "USD",
+			"checkoutEnabled": true
+		}
+	},
+
+	"collections": [
+		{
+			"slug": "membership_plans",
+			"label": "Membership Plans",
+			"labelSingular": "Plan",
+			"icon": "credit-card",
+			"supports": ["drafts"],
+			"fields": [
+				{
+					"slug": "name",
+					"label": "Plan Name",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "description",
+					"label": "Description",
+					"type": "text"
+				},
+				{
+					"slug": "price",
+					"label": "Price",
+					"type": "number",
+					"required": true
+				},
+				{
+					"slug": "billing_period",
+					"label": "Billing Period",
+					"type": "string",
+					"options": {
+						"choices": ["monthly", "quarterly", "yearly", "lifetime"]
+					}
+				},
+				{
+					"slug": "features",
+					"label": "Features",
+					"type": "json"
+				},
+				{
+					"slug": "limits",
+					"label": "Limits",
+					"type": "json"
+				},
+				{
+					"slug": "sort_order",
+					"label": "Sort Order",
+					"type": "integer",
+					"defaultValue": 0
+				}
+			]
+		}
+	],
+
+	"content": {
+		"membership_plans": [
+			{
+				"id": "plan-free",
+				"slug": "free",
+				"status": "published",
+				"data": {
+					"name": "Free",
+					"description": "Basic access",
+					"price": 0,
+					"billing_period": "lifetime",
+					"features": ["Community access", "Basic features"],
+					"limits": {},
+					"sort_order": 0
+				}
+			},
+			{
+				"id": "plan-pro",
+				"slug": "pro",
+				"status": "published",
+				"data": {
+					"name": "Pro",
+					"description": "Full access to all premium content",
+					"price": 19.99,
+					"billing_period": "monthly",
+					"features": ["All premium content", "Priority support", "Exclusive updates"],
+					"limits": {},
+					"sort_order": 1
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,231 @@
+{
+	"$schema": "https://emdashcms.com/seed.schema.json",
+	"version": "1",
+	"meta": {
+		"name": "EmDash LMS - Courses Only",
+		"description": "Course management with individual purchases",
+		"author": "EmDash"
+	},
+
+	"settings": {
+		"lms": {
+			"mode": "lms",
+			"currency": "USD",
+			"checkoutEnabled": true
+		}
+	},
+
+	"collections": [
+		{
+			"slug": "courses",
+			"label": "Courses",
+			"labelSingular": "Course",
+			"icon": "book-open",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Title",
+					"type": "string",
+					"required": true,
+					"searchable": true
+				},
+				{
+					"slug": "description",
+					"label": "Description",
+					"type": "text",
+					"searchable": true
+				},
+				{
+					"slug": "featured_image",
+					"label": "Featured Image",
+					"type": "image"
+				},
+				{
+					"slug": "content",
+					"label": "Content",
+					"type": "portableText",
+					"searchable": true
+				},
+				{
+					"slug": "price",
+					"label": "Price",
+					"type": "number",
+					"options": { "min": 0 }
+				},
+				{
+					"slug": "duration_hours",
+					"label": "Duration (hours)",
+					"type": "number"
+				},
+				{
+					"slug": "difficulty",
+					"label": "Difficulty",
+					"type": "string",
+					"options": {
+						"choices": ["beginner", "intermediate", "advanced"]
+					}
+				}
+			]
+		},
+		{
+			"slug": "modules",
+			"label": "Modules",
+			"labelSingular": "Module",
+			"icon": "folder",
+			"supports": ["drafts"],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Title",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "course_id",
+					"label": "Course",
+					"type": "reference",
+					"options": { "collection": "courses" },
+					"required": true
+				},
+				{
+					"slug": "description",
+					"label": "Description",
+					"type": "text"
+				},
+				{
+					"slug": "sort_order",
+					"label": "Sort Order",
+					"type": "integer",
+					"defaultValue": 0
+				}
+			]
+		},
+		{
+			"slug": "lessons",
+			"label": "Lessons",
+			"labelSingular": "Lesson",
+			"icon": "play-circle",
+			"supports": ["drafts", "revisions"],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Title",
+					"type": "string",
+					"required": true
+				},
+				{
+					"slug": "module_id",
+					"label": "Module",
+					"type": "reference",
+					"options": { "collection": "modules" },
+					"required": true
+				},
+				{
+					"slug": "course_id",
+					"label": "Course",
+					"type": "reference",
+					"options": { "collection": "courses" },
+					"required": true
+				},
+				{
+					"slug": "content",
+					"label": "Content",
+					"type": "portableText"
+				},
+				{
+					"slug": "video_url",
+					"label": "Video URL",
+					"type": "string"
+				},
+				{
+					"slug": "duration_minutes",
+					"label": "Duration (minutes)",
+					"type": "integer"
+				},
+				{
+					"slug": "sort_order",
+					"label": "Sort Order",
+					"type": "integer",
+					"defaultValue": 0
+				},
+				{
+					"slug": "is_preview",
+					"label": "Free Preview",
+					"type": "boolean",
+					"defaultValue": false
+				}
+			]
+		}
+	],
+
+	"content": {
+		"courses": [
+			{
+				"id": "course-intro",
+				"slug": "introduction",
+				"status": "published",
+				"data": {
+					"title": "Introduction Course",
+					"description": "Get started with the basics",
+					"price": 0,
+					"difficulty": "beginner",
+					"duration_hours": 2
+				}
+			},
+			{
+				"id": "course-complete",
+				"slug": "complete-guide",
+				"status": "published",
+				"data": {
+					"title": "Complete Guide",
+					"description": "Master all the concepts from beginner to advanced",
+					"price": 99.99,
+					"difficulty": "intermediate",
+					"duration_hours": 20
+				}
+			}
+		],
+		"modules": [
+			{
+				"id": "module-intro-1",
+				"slug": "introduction",
+				"status": "published",
+				"data": {
+					"title": "Introduction",
+					"course_id": "course-intro",
+					"description": "Welcome to the course",
+					"sort_order": 0
+				}
+			}
+		],
+		"lessons": [
+			{
+				"id": "lesson-1",
+				"slug": "getting-started",
+				"status": "published",
+				"data": {
+					"title": "Getting Started",
+					"module_id": "module-intro-1",
+					"course_id": "course-intro",
+					"duration_minutes": 15,
+					"sort_order": 0,
+					"is_preview": true
+				}
+			},
+			{
+				"id": "lesson-2",
+				"slug": "first-steps",
+				"status": "published",
+				"data": {
+					"title": "Your First Steps",
+					"module_id": "module-intro-1",
+					"course_id": "course-intro",
+					"duration_minutes": 30,
+					"sort_order": 1,
+					"is_preview": false
+				}
+			}
+		]
+	}
+}

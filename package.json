@@ -1,0 +1,56 @@
+{
+  "name": "emdash-lms",
+  "version": "0.1.0",
+  "description": "EmDash LMS — Subscriptions & Memberships",
+  "author": "Tô Triều <hello@totrieu.com>",
+  "license": "MIT",
+  "keywords": [
+    "emdash",
+    "cms",
+    "lms",
+    "learning-management",
+    "membership",
+    "subscriptions",
+    "courses",
+    "astro"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./admin": {
+      "types": "./dist/admin.d.mts",
+      "import": "./dist/admin.mjs"
+    },
+    "./seed.json": "./seed/seed.json",
+    "./seed/membership.json": "./seed/membership.json",
+    "./seed/courses.json": "./seed/courses.json"
+  },
+  "files": [
+    "dist",
+    "seed"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts src/admin.tsx --format esm --dts",
+    "dev": "tsdown src/index.ts src/admin.tsx --format esm --dts --watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {},
+  "optionalDependencies": {
+    "stripe": "^17.0.0"
+  },
+  "devDependencies": {
+    "@phosphor-icons/react": "^2.1.7",
+    "@tanstack/react-query": "^5.62.0",
+    "@types/react": "^18.3.18",
+    "react": "^18.3.1",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "emdash": ">=0.1.0",
+    "react": "^18 || ^19"
+  }
+}
