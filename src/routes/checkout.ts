@@ -2,10 +2,10 @@
  * Checkout API Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import { getProvider } from "../providers/index.js";
-import type { LmsSettings, Order, PaymentProviderConfig } from "../types.js";
+import type { LmsSettings, Order } from "../types.js";
 
 interface CheckoutRouteInput {
 	action: "create" | "verify";
@@ -16,15 +16,21 @@ interface CheckoutRouteInput {
 	providerId?: string;
 }
 
-export async function checkoutRoute(ctx: PluginRouteContext<CheckoutRouteInput>) {
-	const { action, orderId, sessionId, type, itemId, providerId } = ctx.input;
+export async function checkoutRoute(
+	ctx: PluginContext,
+	input: CheckoutRouteInput,
+	requestMeta?: { user?: { id?: string } },
+) {
+	const { action, sessionId, type, itemId, providerId } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	switch (action) {
 		case "create":
 			if (!type || !itemId || !providerId) {
 				throw new Error("Type, itemId, and providerId required");
 			}
-			return createCheckout(ctx, type, itemId, providerId);
+			return createCheckout(ctx, type, itemId, providerId, requestMeta);
 		case "verify":
 			if (!sessionId || !providerId) {
 				throw new Error("Session ID and provider ID required");
@@ -36,13 +42,16 @@ export async function checkoutRoute(ctx: PluginRouteContext<CheckoutRouteInput>)
 }
 
 async function createCheckout(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	type: "membership" | "course",
 	itemId: string,
 	providerId: string,
+	requestMeta?: { user?: { id?: string } },
 ) {
+	if (!ctx.content?.create) throw new Error("Content write access not available");
+
 	// Get settings
-	const settings = (await ctx.kv.get("settings")) as LmsSettings | null;
+	const settings = (await ctx.kv?.get("settings")) as LmsSettings | null;
 	if (!settings?.checkout_enabled) {
 		throw new Error("Checkout is disabled");
 	}
@@ -61,30 +70,30 @@ async function createCheckout(
 
 	// Get item details and price
 	let amount: number;
-	let currency = settings.currency;
+	const currency = settings.currency;
 
 	if (type === "membership") {
-		const plan = await ctx.storage.plans.get(itemId);
-		if (!plan) throw new Error("Plan not found");
-		amount = plan.price;
+		const planItem = await ctx.content.get("membership_plans", itemId);
+		if (!planItem) throw new Error("Plan not found");
+		const planData = planItem.data as Record<string, unknown>;
+		amount = planData.price as number;
 	} else {
-		// For courses, we'd query the content API
-		// For now, get from enrollments storage or assume price is passed
-		throw new Error("Course checkout not yet implemented");
+		// For courses, query the courses collection
+		const courseItem = await ctx.content.get("courses", itemId);
+		if (!courseItem) throw new Error("Course not found");
+		const courseData = courseItem.data as Record<string, unknown>;
+		if (!courseData.is_purchasable) throw new Error("Course is not available for purchase");
+		amount = courseData.price as number;
 	}
 
 	// Get current user
-	const userId = ctx.requestMeta.user?.id;
+	const userId = requestMeta?.user?.id;
 	if (!userId) {
 		throw new Error("Authentication required");
 	}
 
 	// Create order
-	const orderId = crypto.randomUUID();
-	const now = new Date().toISOString();
-
-	const order: Order = {
-		id: orderId,
+	const orderData = {
 		user_id: userId,
 		type,
 		item_id: itemId,
@@ -92,18 +101,17 @@ async function createCheckout(
 		currency,
 		status: "pending",
 		payment_provider: providerId,
-		created_at: now,
-		updated_at: now,
 	};
 
-	await ctx.storage.orders.put(orderId, order);
+	const orderItem = await ctx.content.create("orders", orderData);
+	const orderId = orderItem.id;
 
 	// Create checkout session with provider
+	const order: Order = { id: orderId, ...orderData } as Order;
 	const session = await provider.createCheckout(order, providerConfig);
 
 	// Update order with payment ID
-	order.payment_id = session.id;
-	await ctx.storage.orders.put(orderId, order);
+	await ctx.content.update!("orders", orderId, { payment_id: session.id });
 
 	return {
 		orderId,
@@ -112,9 +120,9 @@ async function createCheckout(
 	};
 }
 
-async function verifyCheckout(ctx: PluginRouteContext, sessionId: string, providerId: string) {
+async function verifyCheckout(ctx: PluginContext, sessionId: string, providerId: string) {
 	// Get settings
-	const settings = (await ctx.kv.get("settings")) as LmsSettings | null;
+	const settings = (await ctx.kv?.get("settings")) as LmsSettings | null;
 	if (!settings) {
 		throw new Error("LMS not configured");
 	}

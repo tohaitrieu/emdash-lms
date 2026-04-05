@@ -2,9 +2,11 @@
  * Orders API Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import type { Order } from "../types.js";
+
+const COLLECTION = "orders";
 
 interface OrdersRouteInput {
 	action: "list" | "get" | "create";
@@ -13,8 +15,10 @@ interface OrdersRouteInput {
 	data?: Partial<Order>;
 }
 
-export async function ordersRoute(ctx: PluginRouteContext<OrdersRouteInput>) {
-	const { action, id, userId, data } = ctx.input;
+export async function ordersRoute(ctx: PluginContext, input: OrdersRouteInput) {
+	const { action, id, userId, data } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	switch (action) {
 		case "list":
@@ -30,31 +34,34 @@ export async function ordersRoute(ctx: PluginRouteContext<OrdersRouteInput>) {
 	}
 }
 
-async function listOrders(ctx: PluginRouteContext, userId?: string) {
-	const result = await ctx.storage.orders.query({
-		where: userId ? { user_id: userId } : undefined,
+async function listOrders(ctx: PluginContext, userId?: string) {
+	const result = await ctx.content!.list(COLLECTION, {
 		orderBy: { created_at: "desc" },
 	});
 
-	return { items: result.items.map((r) => r.data) };
+	let items = result.items.map((item) => ({ id: item.id, ...item.data }));
+
+	if (userId) {
+		items = items.filter((item) => (item as Record<string, unknown>).user_id === userId);
+	}
+
+	return { items };
 }
 
-async function getOrder(ctx: PluginRouteContext, id: string) {
-	const order = await ctx.storage.orders.get(id);
-	if (!order) throw new Error("Order not found");
-	return order;
+async function getOrder(ctx: PluginContext, id: string) {
+	const item = await ctx.content!.get(COLLECTION, id);
+	if (!item) throw new Error("Order not found");
+	return { id: item.id, ...item.data };
 }
 
-async function createOrder(ctx: PluginRouteContext, data: Partial<Order>) {
+async function createOrder(ctx: PluginContext, data: Partial<Order>) {
+	if (!ctx.content?.create) throw new Error("Content write access not available");
+
 	if (!data.user_id || !data.type || !data.item_id || !data.amount) {
 		throw new Error("Missing required order fields");
 	}
 
-	const id = crypto.randomUUID();
-	const now = new Date().toISOString();
-
-	const order: Order = {
-		id,
+	const orderData = {
 		user_id: data.user_id,
 		type: data.type,
 		item_id: data.item_id,
@@ -63,10 +70,8 @@ async function createOrder(ctx: PluginRouteContext, data: Partial<Order>) {
 		status: "pending",
 		payment_provider: data.payment_provider || "",
 		metadata: data.metadata,
-		created_at: now,
-		updated_at: now,
 	};
 
-	await ctx.storage.orders.put(id, order);
-	return order;
+	const item = await ctx.content.create(COLLECTION, orderData as Record<string, unknown>);
+	return { id: item.id, ...item.data };
 }

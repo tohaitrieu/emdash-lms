@@ -115,7 +115,7 @@ export const stripeProvider: PaymentProvider = {
 };
 
 // Lazy load Stripe SDK
-let stripeInstance: ReturnType<typeof import("stripe").default> | null = null;
+let stripeInstance: import("stripe").default | null = null;
 
 async function getStripe(config: PaymentProviderConfig) {
 	if (!stripeInstance) {
@@ -123,7 +123,7 @@ async function getStripe(config: PaymentProviderConfig) {
 		const secretKey = config.test_mode
 			? config.credentials.test_secret_key
 			: config.credentials.live_secret_key;
-		stripeInstance = new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
+		stripeInstance = new Stripe(secretKey, { apiVersion: "2025-02-24.acacia" });
 	}
 	return stripeInstance;
 }

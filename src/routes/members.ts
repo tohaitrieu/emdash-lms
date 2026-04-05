@@ -2,9 +2,11 @@
  * Members API Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import type { Member } from "../types.js";
+
+const COLLECTION = "memberships";
 
 interface MembersRouteInput {
 	action: "list" | "get" | "create" | "update" | "cancel";
@@ -14,8 +16,10 @@ interface MembersRouteInput {
 	data?: Partial<Member>;
 }
 
-export async function membersRoute(ctx: PluginRouteContext<MembersRouteInput>) {
-	const { action, id, userId, planId, data } = ctx.input;
+export async function membersRoute(ctx: PluginContext, input: MembersRouteInput) {
+	const { action, id, userId, planId, data } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	switch (action) {
 		case "list":
@@ -38,48 +42,58 @@ export async function membersRoute(ctx: PluginRouteContext<MembersRouteInput>) {
 }
 
 async function listMembers(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	filters: { userId?: string; planId?: string },
 ) {
-	const where: Record<string, string> = {};
-	if (filters.userId) where.user_id = filters.userId;
-	if (filters.planId) where.plan_id = filters.planId;
-
-	const result = await ctx.storage.members.query({
-		where: Object.keys(where).length > 0 ? where : undefined,
+	const result = await ctx.content!.list(COLLECTION, {
 		orderBy: { created_at: "desc" },
 	});
 
-	return { items: result.items.map((r) => r.data) };
+	let items = result.items.map((item) => ({ id: item.id, ...item.data }));
+
+	// Filter in memory (TODO: extend emdash content API to support where clause)
+	if (filters.userId) {
+		items = items.filter((item) => (item as Record<string, unknown>).user_id === filters.userId);
+	}
+	if (filters.planId) {
+		items = items.filter((item) => (item as Record<string, unknown>).plan_id === filters.planId);
+	}
+
+	return { items };
 }
 
-async function getMember(ctx: PluginRouteContext, id: string) {
-	const member = await ctx.storage.members.get(id);
-	if (!member) throw new Error("Member not found");
-	return member;
+async function getMember(ctx: PluginContext, id: string) {
+	const item = await ctx.content!.get(COLLECTION, id);
+	if (!item) throw new Error("Member not found");
+	return { id: item.id, ...item.data };
 }
 
 async function createMember(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	userId: string,
 	planId: string,
 	data?: Partial<Member>,
 ) {
-	const id = crypto.randomUUID();
-	const now = new Date().toISOString();
+	if (!ctx.content?.create) throw new Error("Content write access not available");
 
 	// Check if user already has active membership
-	const existing = await ctx.storage.members.query({
-		where: { user_id: userId, status: "active" },
-		limit: 1,
+	const existingResult = await ctx.content.list(COLLECTION, {
+		limit: 100,
 	});
+	const existing = {
+		items: existingResult.items.filter(
+			(item) =>
+				(item.data as Record<string, unknown>).user_id === userId &&
+				(item.data as Record<string, unknown>).status === "active",
+		),
+	};
 
 	if (existing.items.length > 0) {
 		throw new Error("User already has active membership");
 	}
 
-	const member: Member = {
-		id,
+	const now = new Date().toISOString();
+	const memberData = {
 		user_id: userId,
 		plan_id: planId,
 		status: "active",
@@ -87,41 +101,33 @@ async function createMember(
 		expires_at: data?.expires_at,
 		payment_provider: data?.payment_provider,
 		subscription_id: data?.subscription_id,
-		created_at: now,
-		updated_at: now,
 	};
 
-	await ctx.storage.members.put(id, member);
-	return member;
+	const item = await ctx.content.create(COLLECTION, memberData);
+	return { id: item.id, ...item.data };
 }
 
-async function updateMember(ctx: PluginRouteContext, id: string, data: Partial<Member>) {
-	const existing = await ctx.storage.members.get(id);
+async function updateMember(ctx: PluginContext, id: string, data: Partial<Member>) {
+	if (!ctx.content?.update) throw new Error("Content write access not available");
+
+	const existing = await ctx.content.get(COLLECTION, id);
 	if (!existing) throw new Error("Member not found");
 
-	const updated: Member = {
-		...existing,
-		...data,
-		id,
-		updated_at: new Date().toISOString(),
-	};
-
-	await ctx.storage.members.put(id, updated);
-	return updated;
+	const item = await ctx.content.update(COLLECTION, id, data as Record<string, unknown>);
+	return { id: item.id, ...item.data };
 }
 
-async function cancelMember(ctx: PluginRouteContext, id: string) {
-	const existing = await ctx.storage.members.get(id);
+async function cancelMember(ctx: PluginContext, id: string) {
+	if (!ctx.content?.update) throw new Error("Content write access not available");
+
+	const existing = await ctx.content.get(COLLECTION, id);
 	if (!existing) throw new Error("Member not found");
 
 	const now = new Date().toISOString();
-	const updated: Member = {
-		...existing,
+	const item = await ctx.content.update(COLLECTION, id, {
 		status: "cancelled",
 		cancelled_at: now,
-		updated_at: now,
-	};
+	});
 
-	await ctx.storage.members.put(id, updated);
-	return updated;
+	return { id: item.id, ...item.data };
 }

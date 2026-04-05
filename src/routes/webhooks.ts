@@ -2,7 +2,7 @@
  * Payment Webhook Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import { getProvider } from "../providers/index.js";
 import type { LmsSettings, Member, Order } from "../types.js";
@@ -13,11 +13,13 @@ interface WebhookRouteInput {
 	headers: Record<string, string>;
 }
 
-export async function webhooksRoute(ctx: PluginRouteContext<WebhookRouteInput>) {
-	const { providerId, payload, headers } = ctx.input;
+export async function webhooksRoute(ctx: PluginContext, input: WebhookRouteInput) {
+	const { providerId, payload, headers } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	// Get settings
-	const settings = (await ctx.kv.get("settings")) as LmsSettings | null;
+	const settings = (await ctx.kv?.get("settings")) as LmsSettings | null;
 	if (!settings) {
 		throw new Error("LMS not configured");
 	}
@@ -37,7 +39,7 @@ export async function webhooksRoute(ctx: PluginRouteContext<WebhookRouteInput>) 
 	// Process webhook
 	const result = await provider.handleWebhook(payload, headers, providerConfig);
 
-	ctx.log.info("Webhook processed", { providerId, event: result.event });
+	ctx.log?.info("Webhook processed", { providerId, event: result.event });
 
 	// Handle different webhook events
 	switch (result.event) {
@@ -64,23 +66,24 @@ export async function webhooksRoute(ctx: PluginRouteContext<WebhookRouteInput>) 
 }
 
 async function handlePaymentCompleted(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	orderId: string,
 	subscriptionId?: string,
 ) {
-	const order = await ctx.storage.orders.get(orderId);
-	if (!order) {
-		ctx.log.warn("Order not found for completed payment", { orderId });
+	if (!ctx.content?.update) throw new Error("Content write access not available");
+
+	const orderItem = await ctx.content.get("orders", orderId);
+	if (!orderItem) {
+		ctx.log?.warn("Order not found for completed payment", { orderId });
 		return;
 	}
 
+	const order = { id: orderItem.id, ...orderItem.data } as Order;
+
 	// Update order status
-	const updatedOrder: Order = {
-		...order,
+	await ctx.content.update("orders", orderId, {
 		status: "completed",
-		updated_at: new Date().toISOString(),
-	};
-	await ctx.storage.orders.put(orderId, updatedOrder);
+	});
 
 	// Fulfill the order
 	if (order.type === "membership") {
@@ -89,60 +92,62 @@ async function handlePaymentCompleted(
 		await createEnrollment(ctx, order);
 	}
 
-	ctx.log.info("Payment completed and fulfilled", { orderId, type: order.type });
+	ctx.log?.info("Payment completed and fulfilled", { orderId, type: order.type });
 }
 
-async function handlePaymentFailed(ctx: PluginRouteContext, orderId: string) {
-	const order = await ctx.storage.orders.get(orderId);
-	if (!order) return;
+async function handlePaymentFailed(ctx: PluginContext, orderId: string) {
+	if (!ctx.content?.update) return;
 
-	const updatedOrder: Order = {
-		...order,
+	const orderItem = await ctx.content.get("orders", orderId);
+	if (!orderItem) return;
+
+	await ctx.content.update("orders", orderId, {
 		status: "failed",
-		updated_at: new Date().toISOString(),
-	};
-	await ctx.storage.orders.put(orderId, updatedOrder);
-
-	ctx.log.warn("Payment failed", { orderId });
-}
-
-async function handleSubscriptionCancelled(ctx: PluginRouteContext, subscriptionId: string) {
-	// Find member by subscription ID
-	const members = await ctx.storage.members.query({
-		where: { subscription_id: subscriptionId },
-		limit: 1,
 	});
 
-	const member = members.items[0]?.data;
-	if (!member) {
-		ctx.log.warn("Member not found for cancelled subscription", { subscriptionId });
-		return;
-	}
-
-	const now = new Date().toISOString();
-	const updatedMember: Member = {
-		...member,
-		status: "cancelled",
-		cancelled_at: now,
-		updated_at: now,
-	};
-	await ctx.storage.members.put(member.id, updatedMember);
-
-	ctx.log.info("Subscription cancelled", { subscriptionId, memberId: member.id });
+	ctx.log?.warn("Payment failed", { orderId });
 }
 
-async function createMembership(ctx: PluginRouteContext, order: Order, subscriptionId?: string) {
-	const plan = await ctx.storage.plans.get(order.item_id);
-	if (!plan) {
-		ctx.log.error("Plan not found for membership creation", { planId: order.item_id });
+async function handleSubscriptionCancelled(ctx: PluginContext, subscriptionId: string) {
+	if (!ctx.content?.update) return;
+
+	// Find member by subscription ID
+	const membersResult = await ctx.content.list("memberships", {});
+	const matchingMembers = membersResult.items.filter(
+		(item) => (item.data as Record<string, unknown>).subscription_id === subscriptionId,
+	);
+
+	const memberItem = matchingMembers[0];
+	if (!memberItem) {
+		ctx.log?.warn("Member not found for cancelled subscription", { subscriptionId });
 		return;
 	}
 
+	const member = { id: memberItem.id, ...memberItem.data } as Member;
 	const now = new Date().toISOString();
-	const expiresAt = calculateExpiry(plan.billing_period);
 
-	const member: Member = {
-		id: crypto.randomUUID(),
+	await ctx.content.update("memberships", member.id, {
+		status: "cancelled",
+		cancelled_at: now,
+	});
+
+	ctx.log?.info("Subscription cancelled", { subscriptionId, memberId: member.id });
+}
+
+async function createMembership(ctx: PluginContext, order: Order, subscriptionId?: string) {
+	if (!ctx.content?.create) return;
+
+	const planItem = await ctx.content.get("membership_plans", order.item_id);
+	if (!planItem) {
+		ctx.log?.error("Plan not found for membership creation", { planId: order.item_id });
+		return;
+	}
+
+	const plan = planItem.data as Record<string, unknown>;
+	const now = new Date().toISOString();
+	const expiresAt = calculateExpiry(plan.billing_period as string);
+
+	const memberData = {
 		user_id: order.user_id,
 		plan_id: order.item_id,
 		status: "active",
@@ -150,28 +155,25 @@ async function createMembership(ctx: PluginRouteContext, order: Order, subscript
 		expires_at: expiresAt,
 		payment_provider: order.payment_provider,
 		subscription_id: subscriptionId,
-		created_at: now,
-		updated_at: now,
 	};
 
-	await ctx.storage.members.put(member.id, member);
-	ctx.log.info("Membership created", { memberId: member.id, planId: plan.id });
+	const memberItem = await ctx.content.create("memberships", memberData);
+	ctx.log?.info("Membership created", { memberId: memberItem.id, planId: plan.id });
 }
 
-async function createEnrollment(ctx: PluginRouteContext, order: Order) {
-	const enrollment = {
-		id: crypto.randomUUID(),
+async function createEnrollment(ctx: PluginContext, order: Order) {
+	if (!ctx.content?.create) return;
+
+	const enrollmentData = {
 		user_id: order.user_id,
 		course_id: order.item_id,
-		source: "purchase" as const,
+		source: "purchase",
 		order_id: order.id,
 		progress: 0,
-		created_at: new Date().toISOString(),
-		updated_at: new Date().toISOString(),
 	};
 
-	await ctx.storage.enrollments.put(enrollment.id, enrollment);
-	ctx.log.info("Enrollment created", { enrollmentId: enrollment.id, courseId: order.item_id });
+	const enrollmentItem = await ctx.content.create("enrollments", enrollmentData);
+	ctx.log?.info("Enrollment created", { enrollmentId: enrollmentItem.id, courseId: order.item_id });
 }
 
 function calculateExpiry(billingPeriod: string): string | undefined {

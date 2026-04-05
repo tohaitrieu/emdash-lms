@@ -138,7 +138,7 @@ export interface Lesson {
 	video_embed?: string;
 	length?: number; // duration in minutes
 	order: number;
-	preview: boolean;
+	is_preview: boolean;
 	prerequisite_id?: string;
 	complexity?: string;
 	resources?: LessonResource[];

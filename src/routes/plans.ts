@@ -2,9 +2,11 @@
  * Membership Plans API Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import type { MembershipPlan } from "../types.js";
+
+const COLLECTION = "membership_plans";
 
 interface PlansRouteInput {
 	action: "list" | "get" | "create" | "update" | "delete";
@@ -12,8 +14,10 @@ interface PlansRouteInput {
 	data?: Partial<MembershipPlan>;
 }
 
-export async function plansRoute(ctx: PluginRouteContext<PlansRouteInput>) {
-	const { action, id, data } = ctx.input;
+export async function plansRoute(ctx: PluginContext, input: PlansRouteInput) {
+	const { action, id, data } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	switch (action) {
 		case "list":
@@ -35,58 +39,33 @@ export async function plansRoute(ctx: PluginRouteContext<PlansRouteInput>) {
 	}
 }
 
-async function listPlans(ctx: PluginRouteContext) {
-	const result = await ctx.storage.plans.query({
+async function listPlans(ctx: PluginContext) {
+	const result = await ctx.content!.list(COLLECTION, {
 		orderBy: { sort_order: "asc" },
 	});
-	return { items: result.items.map((r) => r.data) };
+	return { items: result.items.map((item) => ({ id: item.id, ...item.data })) };
 }
 
-async function getPlan(ctx: PluginRouteContext, id: string) {
-	const plan = await ctx.storage.plans.get(id);
-	if (!plan) throw new Error("Plan not found");
-	return plan;
+async function getPlan(ctx: PluginContext, id: string) {
+	const item = await ctx.content!.get(COLLECTION, id);
+	if (!item) throw new Error("Plan not found");
+	return { id: item.id, ...item.data };
 }
 
-async function createPlan(ctx: PluginRouteContext, data: Partial<MembershipPlan>) {
-	const id = crypto.randomUUID();
-	const now = new Date().toISOString();
-
-	const plan: MembershipPlan = {
-		id,
-		slug: data.slug || id,
-		name: data.name || "New Plan",
-		description: data.description,
-		price: data.price || 0,
-		billing_period: data.billing_period || "monthly",
-		features: data.features || [],
-		limits: data.limits || {},
-		sort_order: data.sort_order || 0,
-		status: data.status || "draft",
-		created_at: now,
-		updated_at: now,
-	};
-
-	await ctx.storage.plans.put(id, plan);
-	return plan;
+async function createPlan(ctx: PluginContext, data: Partial<MembershipPlan>) {
+	if (!ctx.content?.create) throw new Error("Content write access not available");
+	const item = await ctx.content.create(COLLECTION, data as Record<string, unknown>);
+	return { id: item.id, ...item.data };
 }
 
-async function updatePlan(ctx: PluginRouteContext, id: string, data: Partial<MembershipPlan>) {
-	const existing = await ctx.storage.plans.get(id);
-	if (!existing) throw new Error("Plan not found");
-
-	const updated: MembershipPlan = {
-		...existing,
-		...data,
-		id,
-		updated_at: new Date().toISOString(),
-	};
-
-	await ctx.storage.plans.put(id, updated);
-	return updated;
+async function updatePlan(ctx: PluginContext, id: string, data: Partial<MembershipPlan>) {
+	if (!ctx.content?.update) throw new Error("Content write access not available");
+	const item = await ctx.content.update(COLLECTION, id, data as Record<string, unknown>);
+	return { id: item.id, ...item.data };
 }
 
-async function deletePlan(ctx: PluginRouteContext, id: string) {
-	const deleted = await ctx.storage.plans.delete(id);
+async function deletePlan(ctx: PluginContext, id: string) {
+	if (!ctx.content?.delete) throw new Error("Content write access not available");
+	const deleted = await ctx.content.delete(COLLECTION, id);
 	return { deleted };
 }

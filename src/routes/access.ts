@@ -2,7 +2,7 @@
  * Access Control API Routes
  */
 
-import type { PluginRouteContext } from "emdash";
+import type { PluginContext } from "emdash";
 
 import {
 	buildUserAccess,
@@ -19,11 +19,13 @@ interface AccessRouteInput {
 	userId?: string;
 }
 
-export async function accessRoute(ctx: PluginRouteContext<AccessRouteInput>) {
-	const { action, courseId, lessonId, userId } = ctx.input;
+export async function accessRoute(ctx: PluginContext, input: AccessRouteInput, requestMeta?: { user?: { id?: string } }) {
+	const { action, courseId, lessonId, userId } = input;
+
+	if (!ctx.content) throw new Error("Content access not available");
 
 	// Get current user ID
-	const currentUserId = userId || ctx.requestMeta.user?.id;
+	const currentUserId = userId || requestMeta?.user?.id;
 	if (!currentUserId) {
 		throw new Error("User ID required");
 	}
@@ -49,13 +51,13 @@ export async function accessRoute(ctx: PluginRouteContext<AccessRouteInput>) {
 }
 
 async function checkCourseAccessRoute(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	userId: string,
 	courseId: string,
 ) {
 	const [course, userAccess, plans] = await Promise.all([
 		getCourse(ctx, courseId),
-		buildUserAccessFromStorage(ctx, userId),
+		buildUserAccessFromContent(ctx, userId),
 		getPlans(ctx),
 	]);
 
@@ -67,7 +69,7 @@ async function checkCourseAccessRoute(
 }
 
 async function checkLessonAccessRoute(
-	ctx: PluginRouteContext,
+	ctx: PluginContext,
 	userId: string,
 	courseId: string,
 	lessonId: string,
@@ -75,7 +77,7 @@ async function checkLessonAccessRoute(
 	const [course, lesson, userAccess, plans] = await Promise.all([
 		getCourse(ctx, courseId),
 		getLesson(ctx, lessonId),
-		buildUserAccessFromStorage(ctx, userId),
+		buildUserAccessFromContent(ctx, userId),
 		getPlans(ctx),
 	]);
 
@@ -85,10 +87,10 @@ async function checkLessonAccessRoute(
 	return checkLessonAccess(lesson, course, userAccess, plans);
 }
 
-async function listAccessibleCourses(ctx: PluginRouteContext, userId: string) {
+async function listAccessibleCourses(ctx: PluginContext, userId: string) {
 	const [courses, userAccess, plans] = await Promise.all([
 		getAllCourses(ctx),
-		buildUserAccessFromStorage(ctx, userId),
+		buildUserAccessFromContent(ctx, userId),
 		getPlans(ctx),
 	]);
 
@@ -96,52 +98,61 @@ async function listAccessibleCourses(ctx: PluginRouteContext, userId: string) {
 	return { items: accessible };
 }
 
-async function getUserAccess(ctx: PluginRouteContext, userId: string) {
-	const userAccess = await buildUserAccessFromStorage(ctx, userId);
+async function getUserAccess(ctx: PluginContext, userId: string) {
+	const userAccess = await buildUserAccessFromContent(ctx, userId);
 	return userAccess;
 }
 
 // Helper functions
 
-async function buildUserAccessFromStorage(ctx: PluginRouteContext, userId: string) {
+async function buildUserAccessFromContent(ctx: PluginContext, userId: string) {
 	// Get active membership
-	const membersResult = await ctx.storage.members.query({
-		where: { user_id: userId, status: "active" },
-		limit: 1,
-	});
-	const membership = (membersResult.items[0]?.data as Member) || null;
+	const membersResult = await ctx.content!.list("memberships", {});
+	const activeMembers = membersResult.items.filter(
+		(item) =>
+			(item.data as Record<string, unknown>).user_id === userId &&
+			(item.data as Record<string, unknown>).status === "active",
+	);
+	const memberItem = activeMembers[0];
+	const membership = memberItem ? ({ id: memberItem.id, ...memberItem.data } as Member) : null;
 
 	// Get enrollments
-	const enrollmentsResult = await ctx.storage.enrollments.query({
-		where: { user_id: userId },
-	});
-	const enrollments = enrollmentsResult.items.map((r) => r.data as CourseEnrollment);
+	const enrollmentsResult = await ctx.content!.list("enrollments", {});
+	const userEnrollments = enrollmentsResult.items.filter(
+		(item) => (item.data as Record<string, unknown>).user_id === userId,
+	);
+	const enrollments = userEnrollments.map((item) => ({
+		id: item.id,
+		...item.data,
+	})) as CourseEnrollment[];
 
 	return buildUserAccess(userId, membership, enrollments);
 }
 
-async function getPlans(ctx: PluginRouteContext): Promise<MembershipPlan[]> {
-	const result = await ctx.storage.plans.query({
-		where: { status: "published" },
-	});
-	return result.items.map((r) => r.data as MembershipPlan);
+async function getPlans(ctx: PluginContext): Promise<MembershipPlan[]> {
+	const result = await ctx.content!.list("membership_plans", {});
+	const publishedPlans = result.items.filter(
+		(item) => (item.data as Record<string, unknown>).status === "published",
+	);
+	return publishedPlans.map((item) => ({ id: item.id, ...item.data })) as MembershipPlan[];
 }
 
-async function getCourse(ctx: PluginRouteContext, courseId: string): Promise<Course | null> {
-	// Courses are stored as EmDash content, query via content API
-	// For now, return from local storage if we sync courses there
-	const course = await ctx.storage.courses?.get(courseId);
-	return (course as Course) || null;
+async function getCourse(ctx: PluginContext, courseId: string): Promise<Course | null> {
+	const item = await ctx.content!.get("courses", courseId);
+	if (!item) return null;
+	return { id: item.id, ...item.data } as Course;
 }
 
-async function getLesson(ctx: PluginRouteContext, lessonId: string): Promise<Lesson | null> {
-	const lesson = await ctx.storage.lessons?.get(lessonId);
-	return (lesson as Lesson) || null;
+async function getLesson(ctx: PluginContext, lessonId: string): Promise<Lesson | null> {
+	const item = await ctx.content!.get("lessons", lessonId);
+	if (!item) return null;
+	return { id: item.id, ...item.data } as Lesson;
 }
 
-async function getAllCourses(ctx: PluginRouteContext): Promise<Course[]> {
-	const result = await ctx.storage.courses?.query({
-		where: { status: "published" },
-	});
-	return (result?.items.map((r) => r.data) as Course[]) || [];
+async function getAllCourses(ctx: PluginContext): Promise<Course[]> {
+	const result = await ctx.content!.list("courses", {});
+	const publishedCourses = result.items.filter(
+		(item) => (item.data as Record<string, unknown>).status === "published",
+	);
+	return publishedCourses.map((item) => ({ id: item.id, ...item.data })) as Course[];
 }

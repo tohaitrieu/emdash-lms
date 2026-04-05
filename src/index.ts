@@ -8,7 +8,7 @@
  * - Full: Combined membership + LMS with tiered access
  */
 
-import type { PluginDescriptor, PluginStorageConfig, ResolvedPlugin } from "emdash";
+import type { PluginDescriptor, ResolvedPlugin } from "emdash";
 import { definePlugin } from "emdash";
 
 import {
@@ -25,25 +25,11 @@ export * from "./types.js";
 export * from "./access-control.js";
 export * from "./providers/index.js";
 
-// Storage schema for plugin data
-const LMS_STORAGE = {
-  plans: {
-    indexes: ["slug", "status", "sort_order"],
-    uniqueIndexes: ["slug"],
-  },
-  members: {
-    indexes: ["user_id", "plan_id", "status", "subscription_id"],
-  },
-  orders: {
-    indexes: ["user_id", "type", "status", "payment_provider", "created_at"],
-  },
-  enrollments: {
-    indexes: ["user_id", "course_id", "source"],
-  },
-  progress: {
-    indexes: ["user_id", "course_id", "lesson_id"],
-  },
-} satisfies PluginStorageConfig;
+// Collections defined in seed/seed.json:
+// - membership_plans, memberships, orders, enrollments
+// - courses, modules, lessons, quizzes, questions
+// - lesson_progress, quiz_submissions, certificates
+// - coupons, course_reviews, certificate_templates
 
 export interface LmsPluginOptions {
   /** Plugin mode. Default: "full" */
@@ -158,13 +144,16 @@ export function createPlugin(options: LmsPluginOptions = {}): ResolvedPlugin {
     { path: "/settings", label: "Settings", icon: "settings", group: "lms" }
   );
 
+  // Use type assertion to help TypeScript resolve the correct overload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return definePlugin({
     id: "lms",
     version: "0.1.0",
 
-    capabilities: ["read:content", "read:users"],
+    capabilities: ["read:content", "write:content", "read:users"],
 
-    storage: LMS_STORAGE,
+    // Empty storage - collections are defined in seed/seed.json
+    storage: {},
 
     admin: {
       entry: "emdash-lms/admin",
@@ -192,7 +181,7 @@ export function createPlugin(options: LmsPluginOptions = {}): ResolvedPlugin {
         public: true,
       },
     },
-  });
+  } as any);
 }
 
 export default lmsPlugin;
