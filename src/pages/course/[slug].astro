@@ -8,91 +8,182 @@ import Layout from "virtual:emdash-lms/layout";
 import { basePath } from "virtual:emdash-lms/config";
 
 const { slug } = Astro.params;
-if (!slug) return Astro.redirect(`${basePath}/academy`);
+if (!slug) return Astro.redirect(`${basePath}/courses`);
 
 const { entries: courses } = await getEmDashCollection("courses");
 const course = courses.find((c) => c.data.slug === slug || c.id === slug);
-if (!course) return Astro.redirect(`${basePath}/academy`);
+if (!course) return Astro.redirect(`${basePath}/courses`);
 
 const { entries: modules } = await getEmDashCollection("modules");
 const { entries: lessons } = await getEmDashCollection("lessons");
 
+// Use both course.id and course.data.id for matching (data structure varies)
+const courseId = course.data.id || course.id;
+
 const courseModules = modules
-  .filter((m) => m.data.course_id === course.id)
+  .filter((m) => m.data.course_id === courseId || m.data.course_id === course.id)
   .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0));
 
 const moduleLessons = courseModules.map((mod) => ({
   module: mod,
   lessons: lessons
-    .filter((l) => l.data.module_id === mod.id)
+    .filter((l) => l.data.module_id === mod.id || l.data.module_id === mod.data.id)
     .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0)),
 }));
 
 const totalLessons = moduleLessons.reduce((sum, m) => sum + m.lessons.length, 0);
+const totalDuration = moduleLessons.reduce(
+  (sum, m) => sum + m.lessons.reduce((s, l) => s + (l.data.duration_minutes ?? 0), 0),
+  0
+);
+
+function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
+const difficultyLabels: Record<string, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
 ---
 
 <Layout title={course.data.title} description={course.data.excerpt}>
-  <div class="lms-course-detail">
-    <nav class="lms-breadcrumb">
-      <a href={`${basePath}/academy`}>&larr; Academy</a>
-    </nav>
-
-    <header class="lms-course-header">
-      {course.data.featured_image && (
-        <img
-          src={course.data.featured_image}
-          alt={course.data.title}
-          class="lms-course-cover"
-        />
-      )}
-      <h1>{course.data.title}</h1>
-      {course.data.excerpt && (
-        <p class="lms-course-excerpt">{course.data.excerpt}</p>
-      )}
-      <div class="lms-course-meta">
-        {course.data.difficulty && <span>{course.data.difficulty}</span>}
-        {course.data.duration_hours && (
-          <span>{course.data.duration_hours}h</span>
-        )}
-        <span>{totalLessons} lessons</span>
+  <article class="lms-course-detail">
+    {course.data.featured_image && (
+      <div class="lms-course-hero">
+        <img src={course.data.featured_image} alt={course.data.title} />
       </div>
-    </header>
-
-    {course.data.content && (
-      <section class="lms-course-content">
-        <PortableText value={course.data.content} />
-      </section>
     )}
 
-    <section class="lms-curriculum">
-      <h2>Curriculum</h2>
-      {moduleLessons.length === 0 ? (
-        <p class="lms-empty">No modules yet.</p>
-      ) : (
-        moduleLessons.map(({ module, lessons }) => (
-          <div class="lms-module">
-            <h3>{module.data.title}</h3>
-            {module.data.description && <p>{module.data.description}</p>}
-            <ul class="lms-lessons-list">
-              {lessons.map((lesson) => (
-                <li>
-                  <a href={`${basePath}/lesson/${lesson.data.slug || lesson.id}`}>
-                    <span class="lms-lesson-title">{lesson.data.title}</span>
-                    {lesson.data.duration_minutes && (
-                      <span class="lms-lesson-duration">
-                        {lesson.data.duration_minutes}m
-                      </span>
-                    )}
-                    {lesson.data.is_preview && (
-                      <span class="lms-preview-badge">Preview</span>
-                    )}
-                  </a>
-                </li>
-              ))}
-            </ul>
+    <div class="lms-container lms-course-layout">
+      <div class="lms-course-main">
+        <nav class="lms-breadcrumb">
+          <a href={`${basePath}/courses`}>&larr; All Courses</a>
+        </nav>
+
+        <header class="lms-course-header">
+          {course.data.difficulty && (
+            <span class="lms-difficulty-badge">
+              {difficultyLabels[course.data.difficulty] || course.data.difficulty}
+            </span>
+          )}
+          <h1>{course.data.title}</h1>
+          {course.data.excerpt && (
+            <p class="lms-course-excerpt">{course.data.excerpt}</p>
+          )}
+          <div class="lms-course-stats">
+            {totalLessons > 0 && (
+              <span class="lms-stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                {totalLessons} lessons
+              </span>
+            )}
+            {totalDuration > 0 && (
+              <span class="lms-stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {formatDuration(totalDuration)}
+              </span>
+            )}
+            {courseModules.length > 0 && (
+              <span class="lms-stat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                {courseModules.length} modules
+              </span>
+            )}
           </div>
-        ))
-      )}
-    </section>
-  </div>
+        </header>
+
+        {course.data.content && (
+          <section class="lms-course-description">
+            <h2>About this course</h2>
+            <div class="lms-prose">
+              <PortableText value={course.data.content} />
+            </div>
+          </section>
+        )}
+
+        {moduleLessons.length > 0 && (
+          <section class="lms-curriculum">
+            <h2>Course content</h2>
+            <div class="lms-modules-list">
+              {moduleLessons.map(({ module, lessons }, i) => (
+                <details class="lms-module-accordion" open={i === 0}>
+                  <summary class="lms-module-header">
+                    <span class="lms-module-title">{module.data.title}</span>
+                    <span class="lms-module-meta">{lessons.length} lessons</span>
+                  </summary>
+                  <ul class="lms-lessons-list">
+                    {lessons.map((lesson) => (
+                      <li>
+                        <a href={`${basePath}/lesson/${lesson.data.slug || lesson.id}`}>
+                          <span class="lms-lesson-title">{lesson.data.title}</span>
+                          <span class="lms-lesson-meta">
+                            {lesson.data.is_preview && (
+                              <span class="lms-preview-badge">Preview</span>
+                            )}
+                            {lesson.data.duration_minutes && (
+                              <span class="lms-lesson-duration">
+                                {lesson.data.duration_minutes}m
+                              </span>
+                            )}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <aside class="lms-course-sidebar">
+        <div class="lms-sidebar-card">
+          {course.data.featured_image && (
+            <div class="lms-sidebar-thumbnail">
+              <img src={course.data.featured_image} alt={course.data.title} />
+            </div>
+          )}
+          <div class="lms-sidebar-body">
+            <div class="lms-sidebar-stats">
+              {totalLessons > 0 && (
+                <div class="lms-sidebar-stat">
+                  <span class="lms-stat-label">Lessons</span>
+                  <span class="lms-stat-value">{totalLessons}</span>
+                </div>
+              )}
+              {courseModules.length > 0 && (
+                <div class="lms-sidebar-stat">
+                  <span class="lms-stat-label">Modules</span>
+                  <span class="lms-stat-value">{courseModules.length}</span>
+                </div>
+              )}
+              {totalDuration > 0 && (
+                <div class="lms-sidebar-stat">
+                  <span class="lms-stat-label">Duration</span>
+                  <span class="lms-stat-value">{formatDuration(totalDuration)}</span>
+                </div>
+              )}
+            </div>
+            <a href={`${basePath}/plans`} class="lms-enroll-btn">
+              Get Started
+            </a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
 </Layout>

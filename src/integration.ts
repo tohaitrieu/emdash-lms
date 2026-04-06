@@ -2,7 +2,7 @@
  * EmDash LMS Astro Integration
  *
  * Injects frontend pages for LMS functionality:
- * - /academy - Course listing
+ * - /courses - Course listing
  * - /course/[slug] - Course detail
  * - /lesson/[slug] - Lesson viewer
  * - /plans - Membership pricing
@@ -10,6 +10,8 @@
  */
 
 import type { AstroIntegration } from "astro";
+import { fileURLToPath } from "node:url";
+import { resolve, isAbsolute } from "node:path";
 
 export interface LmsIntegrationOptions {
   /** User's layout component path. Required. */
@@ -21,7 +23,7 @@ export interface LmsIntegrationOptions {
 }
 
 const LMS_ROUTES = [
-  { pattern: "/academy", entry: "academy.astro" },
+  { pattern: "/courses", entry: "courses.astro" },
   { pattern: "/course/[slug]", entry: "course/[slug].astro" },
   { pattern: "/lesson/[slug]", entry: "lesson/[slug].astro" },
   { pattern: "/plans", entry: "plans.astro" },
@@ -59,7 +61,10 @@ export function lmsIntegration(options: LmsIntegrationOptions): AstroIntegration
   return {
     name: "emdash-lms",
     hooks: {
-      "astro:config:setup": ({ injectRoute, injectScript, updateConfig, logger }) => {
+      "astro:config:setup": ({ injectRoute, injectScript, updateConfig, logger, config }) => {
+        // Resolve layout path relative to project root
+        const projectRoot = fileURLToPath(config.root);
+        const resolvedLayout = isAbsolute(layout) ? layout : resolve(projectRoot, layout);
         // 1. Inject LMS routes
         for (const route of LMS_ROUTES) {
           injectRoute({
@@ -75,13 +80,13 @@ export function lmsIntegration(options: LmsIntegrationOptions): AstroIntegration
             plugins: [
               {
                 name: "emdash-lms-virtual",
-                resolveId(id) {
+                resolveId(id: string) {
                   if (id === "virtual:emdash-lms/layout") return "\0" + id;
                   if (id === "virtual:emdash-lms/config") return "\0" + id;
                 },
-                load(id) {
+                load(id: string) {
                   if (id === "\0virtual:emdash-lms/layout") {
-                    return `export { default } from "${layout}";`;
+                    return `export { default } from "${resolvedLayout}";`;
                   }
                   if (id === "\0virtual:emdash-lms/config") {
                     return `export const basePath = "${basePath}";`;
