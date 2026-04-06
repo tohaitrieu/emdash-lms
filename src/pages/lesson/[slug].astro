@@ -1,0 +1,115 @@
+---
+/**
+ * /lesson/{slug} - Lesson viewer page
+ */
+import { getEmDashCollection } from "emdash";
+import { PortableText } from "emdash/ui";
+import Layout from "virtual:emdash-lms/layout";
+import { basePath } from "virtual:emdash-lms/config";
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect(`${basePath}/academy`);
+
+const { entries: lessons } = await getEmDashCollection("lessons");
+const lesson = lessons.find((l) => l.data.slug === slug || l.id === slug);
+if (!lesson) return Astro.redirect(`${basePath}/academy`);
+
+const { entries: courses } = await getEmDashCollection("courses");
+const { entries: modules } = await getEmDashCollection("modules");
+
+const course = courses.find((c) => c.id === lesson.data.course_id);
+const module = modules.find((m) => m.id === lesson.data.module_id);
+
+// Get sibling lessons for navigation
+const siblingLessons = lessons
+  .filter((l) => l.data.module_id === lesson.data.module_id)
+  .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0));
+
+const currentIndex = siblingLessons.findIndex((l) => l.id === lesson.id);
+const prevLesson = currentIndex > 0 ? siblingLessons[currentIndex - 1] : null;
+const nextLesson =
+  currentIndex < siblingLessons.length - 1
+    ? siblingLessons[currentIndex + 1]
+    : null;
+---
+
+<Layout title={lesson.data.title} description={lesson.data.excerpt}>
+  <div class="lms-lesson">
+    <nav class="lms-lesson-nav">
+      {course && (
+        <a href={`${basePath}/course/${course.data.slug || course.id}`}>
+          &larr; {course.data.title}
+        </a>
+      )}
+      {module && <span class="lms-module-name">{module.data.title}</span>}
+    </nav>
+
+    <header class="lms-lesson-header">
+      <h1>{lesson.data.title}</h1>
+      {lesson.data.duration_minutes && (
+        <span class="lms-lesson-duration">
+          {lesson.data.duration_minutes} min
+        </span>
+      )}
+    </header>
+
+    {lesson.data.video_url && (
+      <div class="lms-video-player">
+        <iframe
+          src={lesson.data.video_url}
+          allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        ></iframe>
+      </div>
+    )}
+
+    {lesson.data.content && (
+      <section class="lms-lesson-content">
+        <PortableText value={lesson.data.content} />
+      </section>
+    )}
+
+    {lesson.data.summary && (
+      <aside class="lms-lesson-summary">
+        <h2>Summary</h2>
+        <PortableText value={lesson.data.summary} />
+      </aside>
+    )}
+
+    {lesson.data.resources && lesson.data.resources.length > 0 && (
+      <aside class="lms-lesson-resources">
+        <h2>Resources</h2>
+        <ul>
+          {lesson.data.resources.map((resource: { title: string; url: string }) => (
+            <li>
+              <a href={resource.url} target="_blank" rel="noopener">
+                {resource.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    )}
+
+    <nav class="lms-lesson-pagination">
+      {prevLesson ? (
+        <a
+          href={`${basePath}/lesson/${prevLesson.data.slug || prevLesson.id}`}
+          class="lms-prev"
+        >
+          &larr; {prevLesson.data.title}
+        </a>
+      ) : (
+        <span></span>
+      )}
+      {nextLesson && (
+        <a
+          href={`${basePath}/lesson/${nextLesson.data.slug || nextLesson.id}`}
+          class="lms-next"
+        >
+          {nextLesson.data.title} &rarr;
+        </a>
+      )}
+    </nav>
+  </div>
+</Layout>

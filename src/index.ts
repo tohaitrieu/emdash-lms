@@ -25,6 +25,9 @@ export * from "./types.js";
 export * from "./access-control.js";
 export * from "./providers/index.js";
 
+// Re-export Astro integration for convenience
+export { lmsIntegration, type LmsIntegrationOptions } from "./integration.js";
+
 // Collections defined in seed/seed.json:
 // - membership_plans, memberships, orders, enrollments
 // - courses, modules, lessons, quizzes, questions

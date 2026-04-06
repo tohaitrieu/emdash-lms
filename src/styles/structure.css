@@ -1,0 +1,292 @@
+/**
+ * EmDash LMS Structure Styles
+ * Layout and grid only - no colors or effects
+ * Use this with styles: "theme" to inherit your theme colors
+ */
+@import "./variables.css";
+
+/* Page Layout */
+.lms-page-header {
+  margin-bottom: var(--lms-section-gap);
+  text-align: center;
+}
+
+.lms-page-header h1 {
+  font-size: var(--lms-font-size-3xl);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.lms-page-header p {
+  font-size: var(--lms-font-size-lg);
+}
+
+.lms-breadcrumb {
+  margin-bottom: 1.5rem;
+}
+
+.lms-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--lms-text-muted);
+}
+
+/* Course Grid */
+.lms-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--lms-grid-gap);
+}
+
+/* Plans Grid */
+.lms-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--lms-grid-gap);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Course Detail */
+.lms-course-detail {
+  max-width: var(--lms-content-width);
+  margin: 0 auto;
+}
+
+.lms-course-header {
+  margin-bottom: var(--lms-section-gap);
+}
+
+.lms-course-cover {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: var(--lms-radius);
+  margin-bottom: 1.5rem;
+}
+
+.lms-course-excerpt {
+  font-size: var(--lms-font-size-lg);
+  margin-bottom: 1rem;
+}
+
+.lms-course-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.lms-course-meta span {
+  font-size: var(--lms-font-size-sm);
+}
+
+.lms-course-content {
+  margin-bottom: var(--lms-section-gap);
+  line-height: 1.75;
+}
+
+/* Curriculum */
+.lms-curriculum {
+  margin-top: var(--lms-section-gap);
+}
+
+.lms-curriculum h2 {
+  font-size: var(--lms-font-size-2xl);
+  margin-bottom: 1.5rem;
+}
+
+.lms-module {
+  margin-bottom: 1.5rem;
+}
+
+.lms-module h3 {
+  font-size: var(--lms-font-size-lg);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.lms-lessons-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lms-lessons-list li {
+  border-bottom: 1px solid var(--lms-border);
+}
+
+.lms-lessons-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  text-decoration: none;
+}
+
+.lms-lesson-title {
+  flex: 1;
+}
+
+.lms-lesson-duration {
+  font-size: var(--lms-font-size-sm);
+  margin-left: 1rem;
+}
+
+/* Lesson Page */
+.lms-lesson {
+  max-width: var(--lms-content-width);
+  margin: 0 auto;
+}
+
+.lms-lesson-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.lms-lesson-header {
+  margin-bottom: 1.5rem;
+}
+
+.lms-lesson-header h1 {
+  font-size: var(--lms-font-size-2xl);
+  margin-bottom: 0.5rem;
+}
+
+.lms-video-player {
+  aspect-ratio: 16/9;
+  margin-bottom: var(--lms-section-gap);
+  border-radius: var(--lms-radius);
+  overflow: hidden;
+}
+
+.lms-video-player iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.lms-lesson-content {
+  margin-bottom: var(--lms-section-gap);
+  line-height: 1.75;
+}
+
+.lms-lesson-summary,
+.lms-lesson-resources {
+  padding: var(--lms-card-padding);
+  border-radius: var(--lms-radius);
+  margin-bottom: 1.5rem;
+}
+
+.lms-lesson-summary h2,
+.lms-lesson-resources h2 {
+  font-size: var(--lms-font-size-lg);
+  margin-bottom: 1rem;
+}
+
+.lms-lesson-pagination {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--lms-section-gap);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--lms-border);
+}
+
+/* Checkout */
+.lms-checkout {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.lms-checkout h1 {
+  margin-bottom: 1.5rem;
+}
+
+.lms-checkout-layout {
+  display: grid;
+  gap: 2rem;
+}
+
+.lms-checkout-summary,
+.lms-checkout-form-section {
+  padding: var(--lms-card-padding);
+  border-radius: var(--lms-radius);
+}
+
+.lms-checkout-summary h2,
+.lms-checkout-form-section h2 {
+  font-size: var(--lms-font-size-lg);
+  margin-bottom: 1rem;
+}
+
+.lms-checkout-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--lms-border);
+}
+
+.lms-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.lms-item-period {
+  font-size: var(--lms-font-size-sm);
+}
+
+.lms-checkout-discount {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  font-size: var(--lms-font-size-sm);
+}
+
+.lms-checkout-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  font-weight: 600;
+  font-size: var(--lms-font-size-lg);
+}
+
+.lms-checkout-note {
+  font-size: var(--lms-font-size-sm);
+  margin-bottom: 1rem;
+}
+
+.lms-plan-includes {
+  margin-top: 2rem;
+}
+
+.lms-plan-includes h3 {
+  font-size: var(--lms-font-size-base);
+  margin-bottom: 0.75rem;
+}
+
+.lms-plan-includes ul {
+  padding-left: 1.5rem;
+}
+
+.lms-plan-includes li {
+  padding: 0.25rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lms-courses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lms-plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lms-lesson-pagination {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

@@ -110,6 +110,124 @@ export const myProvider: PaymentProvider = {
 };
 ```
 
+## Template Development
+
+EmDash LMS provides standalone Astro templates that can be customized or extended.
+
+### Template Architecture
+
+```
+src/
+├── pages/               # Astro page templates
+│   ├── academy.astro    # Course listing
+│   ├── plans.astro      # Membership pricing
+│   ├── course/
+│   │   └── [slug].astro # Course detail
+│   ├── lesson/
+│   │   └── [slug].astro # Lesson viewer
+│   └── checkout/
+│       └── [id].astro   # Checkout flow
+├── styles/
+│   ├── variables.css    # CSS custom properties
+│   ├── structure.css    # Layout without colors
+│   └── full.css         # Complete styling
+└── integration.ts       # Astro integration
+```
+
+### Virtual Modules
+
+Templates use virtual modules for user configuration:
+
+```typescript
+// Import user's layout component
+import Layout from "virtual:emdash-lms/layout";
+
+// Import config
+import { basePath } from "virtual:emdash-lms/config";
+```
+
+### Creating New Templates
+
+1. Create a new `.astro` file in `src/pages/`
+2. Import the virtual layout and config
+3. Use EmDash APIs to fetch data
+4. Apply LMS CSS classes for consistent styling
+
+Example:
+```astro
+---
+import { getEmDashCollection } from "emdash";
+import Layout from "virtual:emdash-lms/layout";
+import { basePath } from "virtual:emdash-lms/config";
+
+const { entries } = await getEmDashCollection("courses");
+---
+
+<Layout title="My Page">
+  <div class="lms-container">
+    <!-- Your content -->
+  </div>
+</Layout>
+```
+
+### CSS Class Conventions
+
+| Class | Purpose |
+|-------|---------|
+| `lms-container` | Main content wrapper |
+| `lms-page-header` | Page title section |
+| `lms-courses-grid` | Course card grid |
+| `lms-course-card` | Individual course card |
+| `lms-lesson-content` | Lesson body |
+| `lms-sidebar` | Side navigation |
+| `lms-empty` | Empty state message |
+
+### CSS Variables
+
+Override in your theme (fallback to theme vars or defaults):
+
+```css
+:root {
+  /* Layout */
+  --lms-container-width: 1200px;
+  --lms-content-width: 768px;
+  --lms-grid-gap: 1.5rem;
+  --lms-section-gap: 3rem;
+  --lms-card-padding: 1.5rem;
+
+  /* Colors */
+  --lms-accent: var(--accent, #3b82f6);
+  --lms-accent-hover: var(--accent-hover, #2563eb);
+  --lms-text: var(--text, #374151);
+  --lms-text-muted: var(--text-muted, #6b7280);
+  --lms-bg: var(--background, #ffffff);
+  --lms-bg-muted: var(--background-muted, #f9fafb);
+  --lms-border: var(--border, #e5e7eb);
+
+  /* Effects */
+  --lms-radius: var(--radius, 0.5rem);
+  --lms-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --lms-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+```
+
+Dark mode supported via `.dark` class or `prefers-color-scheme: dark`.
+
+### Style Modes
+
+When contributing templates, ensure they work with all style modes:
+
+- **`plugin`**: Full styling (default)
+- **`theme`**: Structure only, inherits theme colors
+- **`minimal`**: No CSS, user styles everything
+
+### Testing Templates
+
+1. Create a test Astro project
+2. Install local plugin: `pnpm add ../emdash-lms`
+3. Configure integration with your layout
+4. Test all style modes
+
 ## Questions?
 
 Open an issue or discussion on GitHub.

@@ -1,6 +1,6 @@
 {
   "name": "emdash-lms",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "EmDash LMS — Subscriptions & Memberships plugin for EmDash CMS",
   "author": "Tô Triều <hello@totrieu.com>",
   "license": "MIT",
@@ -31,21 +31,30 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
+    "./astro": {
+      "types": "./dist/integration.d.mts",
+      "import": "./dist/integration.mjs"
+    },
     "./admin": {
       "types": "./dist/admin.d.mts",
       "import": "./dist/admin.mjs"
     },
+    "./pages/*": "./src/pages/*",
+    "./styles/*": "./src/styles/*",
     "./seed.json": "./seed/seed.json",
     "./seed/membership.json": "./seed/membership.json",
     "./seed/courses.json": "./seed/courses.json"
   },
   "files": [
     "dist",
+    "src/pages",
+    "src/styles",
+    "src/virtual.d.ts",
     "seed"
   ],
   "scripts": {
-    "build": "tsdown src/index.ts src/admin.tsx --format esm --dts",
-    "dev": "tsdown src/index.ts src/admin.tsx --format esm --dts --watch",
+    "build": "tsdown src/index.ts src/integration.ts src/admin.tsx --format esm --dts",
+    "dev": "tsdown src/index.ts src/integration.ts src/admin.tsx --format esm --dts --watch",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {},
@@ -61,6 +70,7 @@
     "typescript": "^5.7.2"
   },
   "peerDependencies": {
+    "astro": ">=5.0.0",
     "emdash": ">=0.1.0",
     "react": "^18 || ^19"
   }

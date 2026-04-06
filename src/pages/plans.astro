@@ -1,0 +1,83 @@
+---
+/**
+ * /plans - Membership pricing page
+ */
+import { getEmDashCollection } from "emdash";
+import Layout from "virtual:emdash-lms/layout";
+import { basePath } from "virtual:emdash-lms/config";
+
+const { entries: plans } = await getEmDashCollection("membership_plans");
+const publishedPlans = plans
+  .filter((p) => p.data.status === "publish")
+  .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0));
+
+function formatPrice(price: number, currency: string = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+  }).format(price);
+}
+---
+
+<Layout title="Membership Plans" description="Choose your membership plan">
+  <div class="lms-pricing">
+    <header class="lms-page-header">
+      <h1>Membership Plans</h1>
+      <p>Choose the plan that's right for you</p>
+    </header>
+
+    {publishedPlans.length === 0 ? (
+      <p class="lms-empty">No plans available yet.</p>
+    ) : (
+      <div class="lms-plans-grid">
+        {publishedPlans.map((plan) => {
+          const currency = plan.data.currency ?? "USD";
+          const hasDiscount =
+            plan.data.sale_price != null &&
+            plan.data.sale_price < plan.data.price;
+
+          return (
+            <div class="lms-plan-card">
+              <h3>{plan.data.name}</h3>
+
+              <div class="lms-plan-price">
+                {hasDiscount ? (
+                  <>
+                    <span class="lms-price-original">
+                      {formatPrice(plan.data.price, currency)}
+                    </span>
+                    <span class="lms-price-sale">
+                      {formatPrice(plan.data.sale_price!, currency)}
+                    </span>
+                  </>
+                ) : (
+                  <span>{formatPrice(plan.data.price, currency)}</span>
+                )}
+                {plan.data.billing_period && (
+                  <span class="lms-billing-period">
+                    /{plan.data.billing_period}
+                  </span>
+                )}
+              </div>
+
+              {plan.data.description && <p>{plan.data.description}</p>}
+
+              {plan.data.features && plan.data.features.length > 0 && (
+                <ul class="lms-plan-features">
+                  {plan.data.features.map((feature: string) => (
+                    <li>{feature}</li>
+                  ))}
+                </ul>
+              )}
+
+              <a href={`${basePath}/checkout/${plan.id}`} class="lms-plan-cta">
+                Get Started
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>

@@ -1,0 +1,56 @@
+/**
+ * EmDash LMS CSS Variables
+ * Override these in your theme's CSS
+ */
+:root {
+  /* Layout */
+  --lms-container-width: var(--container-width, 1200px);
+  --lms-content-width: var(--content-width, 768px);
+  --lms-grid-gap: 1.5rem;
+
+  /* Spacing */
+  --lms-section-gap: 3rem;
+  --lms-card-padding: 1.5rem;
+
+  /* Colors - fallback to theme variables or defaults */
+  --lms-accent: var(--accent, #3b82f6);
+  --lms-accent-hover: var(--accent-hover, #2563eb);
+  --lms-text: var(--text, #374151);
+  --lms-text-muted: var(--text-muted, #6b7280);
+  --lms-bg: var(--background, #ffffff);
+  --lms-bg-muted: var(--background-muted, #f9fafb);
+  --lms-border: var(--border, #e5e7eb);
+
+  /* Effects */
+  --lms-radius: var(--radius, 0.5rem);
+  --lms-shadow: var(--shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+  --lms-shadow-lg: var(--shadow-lg, 0 4px 6px rgba(0, 0, 0, 0.1));
+
+  /* Typography */
+  --lms-font-size-sm: 0.875rem;
+  --lms-font-size-base: 1rem;
+  --lms-font-size-lg: 1.125rem;
+  --lms-font-size-xl: 1.25rem;
+  --lms-font-size-2xl: 1.5rem;
+  --lms-font-size-3xl: 2rem;
+}
+
+/* Dark mode support via media query */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --lms-text: var(--text, #f3f4f6);
+    --lms-text-muted: var(--text-muted, #9ca3af);
+    --lms-bg: var(--background, #111827);
+    --lms-bg-muted: var(--background-muted, #1f2937);
+    --lms-border: var(--border, #374151);
+  }
+}
+
+/* Dark mode support via class */
+.dark {
+  --lms-text: var(--text, #f3f4f6);
+  --lms-text-muted: var(--text-muted, #9ca3af);
+  --lms-bg: var(--background, #111827);
+  --lms-bg-muted: var(--background-muted, #1f2937);
+  --lms-border: var(--border, #374151);
+}

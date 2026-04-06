@@ -46,6 +46,84 @@ export default defineConfig({
 });
 ```
 
+## Frontend Templates
+
+EmDash LMS includes ready-to-use frontend pages. Enable them with the Astro integration:
+
+### Setup
+
+```typescript
+// astro.config.mjs
+import emdash from "emdash/astro";
+import { lmsPlugin } from "emdash-lms";
+import { lmsIntegration } from "emdash-lms/astro";
+
+export default defineConfig({
+  integrations: [
+    emdash({
+      plugins: [lmsPlugin({ mode: "full" })],
+    }),
+    lmsIntegration({
+      layout: "./src/layouts/Base.astro",  // Your layout
+      basePath: "",                         // Optional: prefix all routes
+      styles: "plugin",                     // "plugin" | "theme" | "minimal"
+    }),
+  ],
+});
+```
+
+### Injected Pages
+
+| Route | Description |
+|-------|-------------|
+| `/academy` | Course listing |
+| `/course/[slug]` | Course detail with curriculum |
+| `/lesson/[slug]` | Lesson viewer |
+| `/plans` | Membership pricing |
+| `/checkout/[id]` | Checkout flow |
+
+### Layout Contract
+
+Your layout component must accept these props:
+
+```typescript
+interface Props {
+  title: string;
+  description?: string;
+}
+```
+
+And render a `<slot />` for the page content.
+
+### Style Modes
+
+| Mode | Description |
+|------|-------------|
+| `"plugin"` | Full styling with colors and effects (default) |
+| `"theme"` | Structure only, inherits your theme colors via CSS variables |
+| `"minimal"` | No CSS injected, you style everything |
+
+### CSS Variables
+
+Override these in your theme:
+
+```css
+:root {
+  --lms-accent: #3b82f6;
+  --lms-radius: 0.5rem;
+  --lms-container-width: 1200px;
+  /* See src/styles/variables.css for full list */
+}
+```
+
+### Overriding Templates
+
+Create a file at the same path to override:
+
+```
+src/pages/academy.astro  → Overrides plugin's academy page
+```
+
 ## Configuration
 
 ### Plugin Options

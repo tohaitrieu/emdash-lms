@@ -1,0 +1,101 @@
+---
+/**
+ * /checkout/{id} - Checkout page for membership plans
+ */
+import { getEmDashCollection } from "emdash";
+import Layout from "virtual:emdash-lms/layout";
+import { basePath } from "virtual:emdash-lms/config";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect(`${basePath}/plans`);
+
+const { entries: plans } = await getEmDashCollection("membership_plans");
+const plan = plans.find((p) => p.id === id);
+if (!plan) return Astro.redirect(`${basePath}/plans`);
+
+const currency = plan.data.currency ?? "USD";
+const finalPrice = plan.data.sale_price ?? plan.data.price;
+
+function formatPrice(price: number, curr: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: curr,
+    minimumFractionDigits: 0,
+  }).format(price);
+}
+
+// Checkout API endpoint
+const checkoutUrl = "/_emdash/api/plugins/lms/checkout";
+---
+
+<Layout title={`Checkout - ${plan.data.name}`} description="Complete your purchase">
+  <div class="lms-checkout">
+    <nav class="lms-breadcrumb">
+      <a href={`${basePath}/plans`}>&larr; Back to Plans</a>
+    </nav>
+
+    <h1>Checkout</h1>
+
+    <div class="lms-checkout-layout">
+      <section class="lms-checkout-summary">
+        <h2>Order Summary</h2>
+
+        <div class="lms-checkout-item">
+          <div class="lms-item-details">
+            <span class="lms-item-name">{plan.data.name}</span>
+            {plan.data.billing_period && (
+              <span class="lms-item-period">
+                Billed {plan.data.billing_period}
+              </span>
+            )}
+          </div>
+          <span class="lms-item-price">
+            {formatPrice(finalPrice, currency)}
+          </span>
+        </div>
+
+        {plan.data.sale_price != null &&
+          plan.data.sale_price < plan.data.price && (
+            <div class="lms-checkout-discount">
+              <span>Discount</span>
+              <span>
+                -{formatPrice(plan.data.price - plan.data.sale_price, currency)}
+              </span>
+            </div>
+          )}
+
+        <div class="lms-checkout-total">
+          <span>Total</span>
+          <span>{formatPrice(finalPrice, currency)}</span>
+        </div>
+      </section>
+
+      <section class="lms-checkout-form-section">
+        <h2>Payment</h2>
+        <form action={checkoutUrl} method="POST" class="lms-checkout-form">
+          <input type="hidden" name="plan_id" value={id} />
+          <input type="hidden" name="redirect_url" value={Astro.url.href} />
+
+          <p class="lms-checkout-note">
+            You will be redirected to complete payment securely.
+          </p>
+
+          <button type="submit" class="lms-checkout-btn">
+            Proceed to Payment
+          </button>
+        </form>
+      </section>
+    </div>
+
+    {plan.data.features && plan.data.features.length > 0 && (
+      <aside class="lms-plan-includes">
+        <h3>What's included</h3>
+        <ul>
+          {plan.data.features.map((feature: string) => (
+            <li>{feature}</li>
+          ))}
+        </ul>
+      </aside>
+    )}
+  </div>
+</Layout>

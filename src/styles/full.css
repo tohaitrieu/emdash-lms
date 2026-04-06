@@ -1,0 +1,266 @@
+/**
+ * EmDash LMS Full Styles
+ * Complete styling including colors, effects, and interactions
+ * Use this with styles: "plugin" (default)
+ */
+@import "./structure.css";
+
+/* Course Cards */
+.lms-course-card {
+  display: block;
+  background: var(--lms-bg);
+  border: 1px solid var(--lms-border);
+  border-radius: var(--lms-radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.lms-course-card:hover {
+  box-shadow: var(--lms-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.lms-course-card img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+.lms-course-card-body {
+  padding: var(--lms-card-padding);
+}
+
+.lms-course-card h3 {
+  font-size: var(--lms-font-size-lg);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--lms-text);
+}
+
+.lms-course-card p {
+  font-size: var(--lms-font-size-sm);
+  color: var(--lms-text-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Badges */
+.lms-difficulty-badge,
+.lms-preview-badge {
+  display: inline-block;
+  background: var(--lms-bg-muted);
+  color: var(--lms-text-muted);
+  font-size: var(--lms-font-size-sm);
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-top: 0.5rem;
+}
+
+.lms-preview-badge {
+  background: var(--lms-accent);
+  color: white;
+  margin-left: 0.5rem;
+  margin-top: 0;
+}
+
+/* Plan Cards */
+.lms-plan-card {
+  background: var(--lms-bg);
+  border: 1px solid var(--lms-border);
+  border-radius: var(--lms-radius);
+  padding: var(--lms-card-padding);
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+
+.lms-plan-card:hover {
+  box-shadow: var(--lms-shadow-lg);
+}
+
+.lms-plan-card h3 {
+  font-size: var(--lms-font-size-xl);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--lms-text);
+}
+
+.lms-plan-price {
+  font-size: var(--lms-font-size-3xl);
+  font-weight: 700;
+  color: var(--lms-accent);
+  margin-bottom: 1rem;
+}
+
+.lms-price-original {
+  text-decoration: line-through;
+  color: var(--lms-text-muted);
+  font-size: var(--lms-font-size-lg);
+  margin-right: 0.5rem;
+}
+
+.lms-price-sale {
+  color: var(--lms-accent);
+}
+
+.lms-billing-period {
+  font-size: var(--lms-font-size-base);
+  font-weight: 400;
+  color: var(--lms-text-muted);
+}
+
+.lms-plan-card > p {
+  color: var(--lms-text-muted);
+  margin-bottom: 1rem;
+}
+
+.lms-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.lms-plan-features li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: var(--lms-text);
+}
+
+.lms-plan-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--lms-accent);
+}
+
+.lms-plan-cta {
+  display: inline-block;
+  background: var(--lms-accent);
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: var(--lms-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.lms-plan-cta:hover {
+  background: var(--lms-accent-hover);
+}
+
+/* Links */
+.lms-breadcrumb a,
+.lms-lesson-nav a {
+  color: var(--lms-accent);
+  text-decoration: none;
+}
+
+.lms-breadcrumb a:hover,
+.lms-lesson-nav a:hover {
+  text-decoration: underline;
+}
+
+.lms-module-name {
+  color: var(--lms-text-muted);
+}
+
+.lms-lessons-list a {
+  color: var(--lms-text);
+}
+
+.lms-lessons-list a:hover {
+  color: var(--lms-accent);
+}
+
+.lms-lesson-duration {
+  color: var(--lms-text-muted);
+}
+
+/* Pagination */
+.lms-lesson-pagination a {
+  color: var(--lms-accent);
+  text-decoration: none;
+}
+
+.lms-lesson-pagination a:hover {
+  text-decoration: underline;
+}
+
+/* Summary & Resources */
+.lms-lesson-summary {
+  background: var(--lms-bg-muted);
+}
+
+.lms-lesson-resources {
+  background: var(--lms-bg);
+  border: 1px solid var(--lms-border);
+}
+
+.lms-lesson-resources a {
+  color: var(--lms-accent);
+  text-decoration: none;
+}
+
+.lms-lesson-resources a:hover {
+  text-decoration: underline;
+}
+
+/* Checkout */
+.lms-checkout-summary {
+  background: var(--lms-bg-muted);
+}
+
+.lms-checkout-form-section {
+  background: var(--lms-bg);
+  border: 1px solid var(--lms-border);
+}
+
+.lms-checkout-discount {
+  color: var(--lms-accent);
+}
+
+.lms-checkout-note {
+  color: var(--lms-text-muted);
+}
+
+.lms-checkout-btn {
+  width: 100%;
+  background: var(--lms-accent);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: var(--lms-radius);
+  font-size: var(--lms-font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lms-checkout-btn:hover {
+  background: var(--lms-accent-hover);
+}
+
+/* Course Meta */
+.lms-course-meta span {
+  color: var(--lms-text-muted);
+  background: var(--lms-bg-muted);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--lms-radius);
+}
+
+/* Plan Includes */
+.lms-plan-includes {
+  color: var(--lms-text-muted);
+}
+
+.lms-plan-includes li {
+  color: var(--lms-text);
+}

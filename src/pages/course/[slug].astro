@@ -1,0 +1,98 @@
+---
+/**
+ * /course/{slug} - Course detail page
+ */
+import { getEmDashCollection } from "emdash";
+import { PortableText } from "emdash/ui";
+import Layout from "virtual:emdash-lms/layout";
+import { basePath } from "virtual:emdash-lms/config";
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect(`${basePath}/academy`);
+
+const { entries: courses } = await getEmDashCollection("courses");
+const course = courses.find((c) => c.data.slug === slug || c.id === slug);
+if (!course) return Astro.redirect(`${basePath}/academy`);
+
+const { entries: modules } = await getEmDashCollection("modules");
+const { entries: lessons } = await getEmDashCollection("lessons");
+
+const courseModules = modules
+  .filter((m) => m.data.course_id === course.id)
+  .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0));
+
+const moduleLessons = courseModules.map((mod) => ({
+  module: mod,
+  lessons: lessons
+    .filter((l) => l.data.module_id === mod.id)
+    .toSorted((a, b) => (a.data.sort_order ?? 0) - (b.data.sort_order ?? 0)),
+}));
+
+const totalLessons = moduleLessons.reduce((sum, m) => sum + m.lessons.length, 0);
+---
+
+<Layout title={course.data.title} description={course.data.excerpt}>
+  <div class="lms-course-detail">
+    <nav class="lms-breadcrumb">
+      <a href={`${basePath}/academy`}>&larr; Academy</a>
+    </nav>
+
+    <header class="lms-course-header">
+      {course.data.featured_image && (
+        <img
+          src={course.data.featured_image}
+          alt={course.data.title}
+          class="lms-course-cover"
+        />
+      )}
+      <h1>{course.data.title}</h1>
+      {course.data.excerpt && (
+        <p class="lms-course-excerpt">{course.data.excerpt}</p>
+      )}
+      <div class="lms-course-meta">
+        {course.data.difficulty && <span>{course.data.difficulty}</span>}
+        {course.data.duration_hours && (
+          <span>{course.data.duration_hours}h</span>
+        )}
+        <span>{totalLessons} lessons</span>
+      </div>
+    </header>
+
+    {course.data.content && (
+      <section class="lms-course-content">
+        <PortableText value={course.data.content} />
+      </section>
+    )}
+
+    <section class="lms-curriculum">
+      <h2>Curriculum</h2>
+      {moduleLessons.length === 0 ? (
+        <p class="lms-empty">No modules yet.</p>
+      ) : (
+        moduleLessons.map(({ module, lessons }) => (
+          <div class="lms-module">
+            <h3>{module.data.title}</h3>
+            {module.data.description && <p>{module.data.description}</p>}
+            <ul class="lms-lessons-list">
+              {lessons.map((lesson) => (
+                <li>
+                  <a href={`${basePath}/lesson/${lesson.data.slug || lesson.id}`}>
+                    <span class="lms-lesson-title">{lesson.data.title}</span>
+                    {lesson.data.duration_minutes && (
+                      <span class="lms-lesson-duration">
+                        {lesson.data.duration_minutes}m
+                      </span>
+                    )}
+                    {lesson.data.is_preview && (
+                      <span class="lms-preview-badge">Preview</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
+    </section>
+  </div>
+</Layout>
