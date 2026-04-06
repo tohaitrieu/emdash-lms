@@ -6,7 +6,7 @@ Thank you for your interest in contributing!
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/emdash-cms/emdash-lms.git
+git clone https://github.com/tohaitrieu/emdash-lms.git
 cd emdash-lms
 ```
 

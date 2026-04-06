@@ -1,9 +1,17 @@
 {
   "name": "emdash-lms",
   "version": "0.1.0",
-  "description": "EmDash LMS — Subscriptions & Memberships",
+  "description": "EmDash LMS — Subscriptions & Memberships plugin for EmDash CMS",
   "author": "Tô Triều <hello@totrieu.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tohaitrieu/emdash-lms.git"
+  },
+  "homepage": "https://github.com/tohaitrieu/emdash-lms#readme",
+  "bugs": {
+    "url": "https://github.com/tohaitrieu/emdash-lms/issues"
+  },
   "keywords": [
     "emdash",
     "cms",
@@ -12,7 +20,10 @@
     "membership",
     "subscriptions",
     "courses",
-    "astro"
+    "astro",
+    "headless-cms",
+    "education",
+    "e-learning"
   ],
   "type": "module",
   "exports": {

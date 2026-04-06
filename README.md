@@ -1,6 +1,9 @@
 # EmDash LMS
 
-A unified Learning Management System plugin for [EmDash CMS](https://emdashcms.com).
+[![npm version](https://img.shields.io/npm/v/emdash-lms.svg)](https://www.npmjs.com/package/emdash-lms)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+A unified Learning Management System plugin for [EmDash CMS](https://emdashcms.com). Build membership sites, online courses, or complete e-learning platforms.
 
 ## Features
 
@@ -168,16 +171,25 @@ registerProvider({
 ## Development
 
 ```bash
+# Install dependencies
+pnpm install
+
 # Build
 pnpm build
 
 # Watch mode
 pnpm dev
-
-# Run tests
-pnpm test
 ```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## Related
+
+- [EmDash CMS](https://emdashcms.com) - The headless CMS this plugin extends
+- [emdash](https://www.npmjs.com/package/emdash) - Core EmDash package
 
 ## License
 
-MIT
+MIT © [Tô Triều](https://totrieu.com)
